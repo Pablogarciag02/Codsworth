@@ -4,6 +4,7 @@ from google.oauth2.service_account import Credentials
 import pandas as pd
 from datetime import datetime, timedelta
 import hashlib
+import streamlit_cookies_manager as scm
 
 # ============================================
 # CONFIGURATION
@@ -20,18 +21,34 @@ PASSWORD_HASH = st.secrets["auth"]["PASSWORD_HASH"]
 # SESSION MANAGEMENT
 # ============================================
 
+# Initialize cookie manager
+cookies = scm.EncryptedCookieManager(
+    prefix="finance_tracker_",
+    password="finance_tracker_cookie_key_2025_pablo"
+)
+
+if not cookies.ready():
+    st.stop()
+
 def set_auth_cookie():
     """Set authentication cookie that expires in 30 days"""
     expiry = (datetime.now() + timedelta(days=30)).isoformat()
-    st.session_state['auth_expiry'] = expiry
+    cookies['auth_expiry'] = expiry
+    cookies.save()
 
 def check_auth_cookie():
     """Check if authentication cookie is still valid"""
-    if 'auth_expiry' in st.session_state:
-        expiry = datetime.fromisoformat(st.session_state['auth_expiry'])
+    if 'auth_expiry' in cookies:
+        expiry = datetime.fromisoformat(cookies['auth_expiry'])
         if datetime.now() < expiry:
             return True
     return False
+
+def clear_auth_cookie():
+    """Remove authentication cookie"""
+    if 'auth_expiry' in cookies:
+        del cookies['auth_expiry']
+        cookies.save()
 
 # ============================================
 # AUTHENTICATION
@@ -69,8 +86,7 @@ st.sidebar.success('✅ Logged in')
 
 if st.sidebar.button('Logout'):
     st.session_state.authenticated = False
-    if 'auth_expiry' in st.session_state:
-        del st.session_state['auth_expiry']
+    clear_auth_cookie()
     st.rerun()
 
 # ============================================
