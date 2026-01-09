@@ -85,8 +85,9 @@ def get_google_sheet():
         'https://www.googleapis.com/auth/drive'
     ]
     
-    creds = Credentials.from_service_account_file(
-        'service_account.json',
+    # Load credentials from Streamlit secrets
+    creds = Credentials.from_service_account_info(
+        st.secrets["gcp_service_account"],
         scopes=scopes
     )
     
